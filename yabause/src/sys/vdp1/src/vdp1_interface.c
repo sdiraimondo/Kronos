@@ -17,10 +17,15 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 #include "vdp1_interface.h"
+#include "vdp1.h"
+#include "yabause.h"
 #include <stdlib.h>
 
-
+extern Vdp1 * Vdp1Regs;
 YabEventQueue *vdp1_q;
+
+#define LOG
+#define FRAMELOG
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -59,6 +64,68 @@ void FASTCALL Vdp1FrameBufferWriteLong(SH2_struct *context, u8* mem, u32 addr, u
   ((int*)(p->msg))[1]=addr; //Addr
   ((int*)(p->msg))[2]=val; //Val
   YabAddEventQueue(vdp1_q,p);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Vdp1WriteByte(SH2_struct *context, u8* mem, u32 addr, UNUSED u8 val) {
+   addr &= 0xFF;
+   LOG("trying to byte-write a Vdp1 register - %08X\n", addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
+  addr &= 0xFF;
+  vdp1Command_struct *p = (vdp1Command_struct*)malloc(sizeof(vdp1Command_struct));
+  p->msg = malloc(3*sizeof(int));
+  ((int*)(p->msg))[0]=1; //Word
+  ((int*)(p->msg))[1]=addr; //Addr
+  ((int*)(p->msg))[2]=val; //Val
+  p->cmd = VDP1REG_UPDATE;
+  switch(addr) {
+    case 0x0:
+      if ((Vdp1Regs->FBCR & 3) != 3) val = (val & (~0x4));
+      Vdp1Regs->TVMR = val;
+      YabAddEventQueue(vdp1_q,p);
+      FRAMELOG("TVMR => Write VBE=%d FCM=%d FCT=%d line = %d\n", (Vdp1Regs->TVMR >> 3) & 0x01, (Vdp1Regs->FBCR & 0x02) >> 1, (Vdp1Regs->FBCR & 0x01),  yabsys.LineCount);
+    break;
+    case 0x2:
+      Vdp1Regs->FBCR = val;
+      YabAddEventQueue(vdp1_q,p);
+      FRAMELOG("FBCR => Write VBE=%d FCM=%d FCT=%d line = %d\n", (Vdp1Regs->TVMR >> 3) & 0x01, (Vdp1Regs->FBCR & 0x02) >> 1, (Vdp1Regs->FBCR & 0x01),  yabsys.LineCount);
+      break;
+    case 0x4:
+      FRAMELOG("Write PTMR %X line = %d %d\n", val, yabsys.LineCount, yabsys.VBlankLineCount);
+      if ((val & 0x3)==0x3) {
+        //Skeleton warriors is writing 0xFFF to PTMR. It looks like the behavior is 0x2
+          val = 0x2;
+      }
+      Vdp1Regs->PTMR = val;
+      YabAddEventQueue(vdp1_q,p);
+      break;
+      case 0x6:
+         Vdp1Regs->EWDR = val;
+         break;
+      case 0x8:
+         Vdp1Regs->EWLR = val;
+         break;
+      case 0xA:
+         Vdp1Regs->EWRR = val;
+         break;
+      case 0xC:
+         Vdp1Regs->ENDR = val;
+         break;
+      default:
+         LOG("trying to write a Vdp1 read-only register - %08X\n", addr);
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Vdp1WriteLong(SH2_struct *context, u8* mem, u32 addr, UNUSED u32 val) {
+   addr &= 0xFF;
+   LOG("trying to long-write a Vdp1 register - %08X\n", addr);
 }
 
 /////////////////////////////////////////////////////////////////////////////

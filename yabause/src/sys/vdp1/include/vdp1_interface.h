@@ -35,7 +35,8 @@ enum {
   VDP1FB_WRITE = 0,
   VDP1_VBLANKOUT,
   VDP1_HBLANKOUT,
-  VDP1_HBLANKIN
+  VDP1_HBLANKIN,
+  VDP1REG_UPDATE
 };
 
 extern YabEventQueue *vdp1_q;
@@ -43,6 +44,10 @@ extern YabEventQueue *vdp1_q;
 extern void Vdp1FrameBufferWriteByte(SH2_struct *context, u8*, u32, u8);
 extern void Vdp1FrameBufferWriteWord(SH2_struct *context, u8*, u32, u16);
 extern void Vdp1FrameBufferWriteLong(SH2_struct *context, u8*, u32, u32);
+
+extern void Vdp1WriteByte(SH2_struct *context, u8*, u32, u8);
+extern void Vdp1WriteWord(SH2_struct *context, u8*, u32, u16);
+extern void Vdp1WriteLong(SH2_struct *context, u8*, u32, u32);
 
 extern void Vdp1HBlankIN(void);
 extern void Vdp1HBlankOUT(void);

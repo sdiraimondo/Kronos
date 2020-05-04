@@ -892,7 +892,6 @@ int YabauseEmulate(void) {
          PROFILE_STOP("hblankout");
          PROFILE_START("SCSP");
          ScspExec();
-         Vdp1Exec(0);
          PROFILE_STOP("SCSP");
          yabsys.DecilineCount = 0;
          yabsys.LineCount++;
@@ -923,6 +922,7 @@ int YabauseEmulate(void) {
             PROFILE_STOP("VDP1/VDP2");
          }
       }
+      Vdp1Exec(0);
       PROFILE_START("SCU");
       ScuExec((yabsys.DecilineStop>>YABSYS_TIMING_BITS) / 2);
       PROFILE_STOP("SCU");

@@ -318,13 +318,6 @@ u32 FASTCALL Vdp1ReadLong(SH2_struct *context, u8* mem, u32 addr) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
-void FASTCALL Vdp1WriteByte(SH2_struct *context, u8* mem, u32 addr, UNUSED u8 val) {
-   addr &= 0xFF;
-   LOG("trying to byte-write a Vdp1 register - %08X\n", addr);
-}
-
-//////////////////////////////////////////////////////////////////////////////
 static int needVBlankErase() {
   return (Vdp1External.useVBlankErase != 0);
 }
@@ -358,61 +351,6 @@ static void Vdp1TryDraw(void) {
     Vdp1Draw();
     needVdp1draw = 0;
   }
-}
-
-void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
-  addr &= 0xFF;
-  switch(addr) {
-    case 0x0:
-      if ((Vdp1Regs->FBCR & 3) != 3) val = (val & (~0x4));
-      Vdp1Regs->TVMR = val;
-      updateTVMRMode();
-      FRAMELOG("TVMR => Write VBE=%d FCM=%d FCT=%d line = %d\n", (Vdp1Regs->TVMR >> 3) & 0x01, (Vdp1Regs->FBCR & 0x02) >> 1, (Vdp1Regs->FBCR & 0x01),  yabsys.LineCount);
-    break;
-    case 0x2:
-      Vdp1Regs->FBCR = val;
-      FRAMELOG("FBCR => Write VBE=%d FCM=%d FCT=%d line = %d\n", (Vdp1Regs->TVMR >> 3) & 0x01, (Vdp1Regs->FBCR & 0x02) >> 1, (Vdp1Regs->FBCR & 0x01),  yabsys.LineCount);
-      updateFBCRMode();
-      break;
-    case 0x4:
-      FRAMELOG("Write PTMR %X line = %d %d\n", val, yabsys.LineCount, yabsys.VBlankLineCount);
-      if ((val & 0x3)==0x3) {
-        //Skeleton warriors is writing 0xFFF to PTMR. It looks like the behavior is 0x2
-          val = 0x2;
-      }
-      Vdp1Regs->PTMR = val;
-      Vdp1External.plot_trigger_line = -1;
-      Vdp1External.plot_trigger_done = 0;
-      if (val == 1){
-        FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
-        Vdp1External.plot_trigger_line = yabsys.LineCount;
-        needVdp1draw = 1;
-        Vdp1TryDraw();
-        Vdp1External.plot_trigger_done = 1;
-      }
-      break;
-      case 0x6:
-         Vdp1Regs->EWDR = val;
-         break;
-      case 0x8:
-         Vdp1Regs->EWLR = val;
-         break;
-      case 0xA:
-         Vdp1Regs->EWRR = val;
-         break;
-      case 0xC:
-         Vdp1Regs->ENDR = val;
-         break;
-      default:
-         LOG("trying to write a Vdp1 read-only register - %08X\n", addr);
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void FASTCALL Vdp1WriteLong(SH2_struct *context, u8* mem, u32 addr, UNUSED u32 val) {
-   addr &= 0xFF;
-   LOG("trying to long-write a Vdp1 register - %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2061,6 +1999,29 @@ static void Vdp1HBlankINSync(void) {
   #endif
 }
 
+static void Vdp1UpdateReg(int type, int addr, int val) {
+  switch(addr){
+    case 0x0:
+      updateTVMRMode();
+    break;
+    case 0x2:
+      updateFBCRMode();
+      break;
+    case 0x4:
+      Vdp1External.plot_trigger_line = -1;
+      Vdp1External.plot_trigger_done = 0;
+      if (val == 1){
+        Vdp1External.plot_trigger_line = yabsys.LineCount;
+        needVdp1draw = 1;
+        Vdp1TryDraw();
+        Vdp1External.plot_trigger_done = 1;
+      }
+      break;
+      default:
+      break;
+  }
+}
+
 void Vdp1Exec(int cycles){
   vdp1Command_struct *p;
   while(YaGetQueueSize(vdp1_q) != 0){
@@ -2084,6 +2045,9 @@ void Vdp1Exec(int cycles){
       break;
       case VDP1_HBLANKIN:
         Vdp1HBlankINSync();
+      break;
+      case VDP1REG_UPDATE:
+        Vdp1UpdateReg(((int*)(p->msg))[0],((int*)(p->msg))[1],((int*)(p->msg))[2]);
       break;
     }
     if (p->msg != NULL) free(p->msg);
