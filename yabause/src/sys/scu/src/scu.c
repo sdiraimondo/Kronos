@@ -2490,8 +2490,8 @@ void ScuTestInterruptMask()
            IRLSet = 1;
            ScuRegs->ITEdge &= ~ScuInterrupt[i].status;
            SH2SendInterrupt(MSH2, ScuInterrupt[i].vector, ScuInterrupt[i].level);
-           sendSlave(ScuInterrupt[i].vector, ScuInterrupt[i].level);
         }
+        sendSlave(ScuInterrupt[i].vector, ScuInterrupt[i].level);
       }
    }
 }
