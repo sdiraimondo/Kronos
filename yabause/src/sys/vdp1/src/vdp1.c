@@ -447,11 +447,10 @@ void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
       if (val == 1){
         FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
         Vdp1External.plot_trigger_line = yabsys.LineCount;
+        abortVdp1();
         vdp1_clock = 0;
         needVdp1draw = 1;
         Vdp1TryDraw();
-        abortVdp1();
-
         Vdp1External.plot_trigger_done = 1;
       }
       break;
@@ -2263,7 +2262,6 @@ void Vdp1HBlankIN(void)
       if(Vdp1External.plot_trigger_done == 0) {
         vdp1_clock = 0;
         needVdp1draw = 1;
-        abortVdp1();
         Vdp1External.plot_trigger_done = 1;
       }
     }
