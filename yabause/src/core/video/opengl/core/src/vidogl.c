@@ -4658,16 +4658,6 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   free(rgb);
 }
 
-int samePriority(int id, Vdp2 *a, Vdp2 *b) {
-    switch (id) {
-    case NBG1:
-      if (((a->PRINA >> 8) & 0x7) != ((b->PRINA >> 8) & 0x7)) return 0;
-    default:
-    break;
-  }
-  return 1;
-}
-
 int sameVDP2RegRBG0(Vdp2 *a, Vdp2 *b)
 {
   if ((a->BGON & 0x1010) != (b->BGON & 0x1010)) return 0;
@@ -5070,270 +5060,245 @@ static void Vdp2DrawNBG0RBG1(Vdp2* varVdp2Regs)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void Vdp2DrawNBG1_part(vdp2draw_struct *info, Vdp2* varVdp2Regs)
+static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
 {
+  vdp2draw_struct info = {0};
   YglTexture texture;
   YglCache tmpc;
-  info->dst = 0;
-  info->idScreen = NBG1;
-  info->uclipmode = 0;
-  info->cor = 0;
-  info->cog = 0;
-  info->cob = 0;
-  info->specialcolorfunction = 0;
-  info->enable = 0;
-  // info->startLine = 0;
-  // info->endLine = (yabsys.VBlankLineCount < 270)?yabsys.VBlankLineCount:270;
+  info.dst = 0;
+  info.idScreen = NBG1;
+  info.uclipmode = 0;
+  info.cor = 0;
+  info.cog = 0;
+  info.cob = 0;
+  info.specialcolorfunction = 0;
+  info.enable = 0;
+  info.startLine = 0;
+  info.endLine = (yabsys.VBlankLineCount < 270)?yabsys.VBlankLineCount:270;
 
-  for (int i=info->startLine; i<info->endLine; i++) {
-    info->display[i] = isEnabled(NBG1, &Vdp2Lines[i]);
-    info->enable |= info->display[i];
+  for (int i=0; i<yabsys.VBlankLineCount; i++) {
+    info.display[i] = isEnabled(NBG1, &Vdp2Lines[i]);
+    info.enable |= info.display[i];
   }
-  if (!info->enable) return;
-  info->transparencyenable = !(varVdp2Regs->BGON & 0x200);
-  info->specialprimode = (varVdp2Regs->SFPRMD >> 2) & 0x3;
+  if (!info.enable) return;
+  info.transparencyenable = !(varVdp2Regs->BGON & 0x200);
+  info.specialprimode = (varVdp2Regs->SFPRMD >> 2) & 0x3;
 
-  info->colornumber = (varVdp2Regs->CHCTLA & 0x3000) >> 12;
+  info.colornumber = (varVdp2Regs->CHCTLA & 0x3000) >> 12;
 
-  if ((info->isbitmap = varVdp2Regs->CHCTLA & 0x200) != 0)
+  if ((info.isbitmap = varVdp2Regs->CHCTLA & 0x200) != 0)
   {
 
-    ReadBitmapSize(info, varVdp2Regs->CHCTLA >> 10, 0x3);
+    ReadBitmapSize(&info, varVdp2Regs->CHCTLA >> 10, 0x3);
 
-    info->x = -((varVdp2Regs->SCXIN1 & 0x7FF) % info->cellw);
-    info->y = -((varVdp2Regs->SCYIN1 & 0x7FF) % info->cellh);
-    info->charaddr = ((varVdp2Regs->MPOFN & 0x70) >> 4) * 0x20000;
-    info->paladdr = (varVdp2Regs->BMPNA & 0x700) >> 4;
-    info->flipfunction = 0;
-    info->specialfunction = 0;
-    info->specialcolorfunction = (varVdp2Regs->BMPNA & 0x1000) >> 4;
+    info.x = -((varVdp2Regs->SCXIN1 & 0x7FF) % info.cellw);
+    info.y = -((varVdp2Regs->SCYIN1 & 0x7FF) % info.cellh);
+    info.charaddr = ((varVdp2Regs->MPOFN & 0x70) >> 4) * 0x20000;
+    info.paladdr = (varVdp2Regs->BMPNA & 0x700) >> 4;
+    info.flipfunction = 0;
+    info.specialfunction = 0;
+    info.specialcolorfunction = (varVdp2Regs->BMPNA & 0x1000) >> 4;
   }
   else
   {
-    info->mapwh = 2;
+    info.mapwh = 2;
 
-    ReadPlaneSize(info, varVdp2Regs->PLSZ >> 2);
+    ReadPlaneSize(&info, varVdp2Regs->PLSZ >> 2);
 
-    info->x = -((varVdp2Regs->SCXIN1 & 0x7FF) % (512 * info->planew));
-    info->y = -((varVdp2Regs->SCYIN1 & 0x7FF) % (512 * info->planeh));
+    info.x = -((varVdp2Regs->SCXIN1 & 0x7FF) % (512 * info.planew));
+    info.y = -((varVdp2Regs->SCYIN1 & 0x7FF) % (512 * info.planeh));
 
-    ReadPatternData(info, varVdp2Regs->PNCN1, varVdp2Regs->CHCTLA & 0x100);
+    ReadPatternData(&info, varVdp2Regs->PNCN1, varVdp2Regs->CHCTLA & 0x100);
   }
 
-  info->specialcolormode = (varVdp2Regs->SFCCMD >> 2) & 0x3;
+  info.specialcolormode = (varVdp2Regs->SFCCMD >> 2) & 0x3;
 
   if (varVdp2Regs->SFSEL & 0x2)
-    info->specialcode = varVdp2Regs->SFCODE >> 8;
+    info.specialcode = varVdp2Regs->SFCODE >> 8;
   else
-    info->specialcode = varVdp2Regs->SFCODE & 0xFF;
+    info.specialcode = varVdp2Regs->SFCODE & 0xFF;
 
-  ReadMosaicData(info, 0x2, varVdp2Regs);
+  ReadMosaicData(&info, 0x2, varVdp2Regs);
 
 
-  info->blendmode = 0;
+  info.blendmode = 0;
 
-  info->alpha = ((~varVdp2Regs->CCRNA & 0x1F00) >> 5);
+  info.alpha = ((~varVdp2Regs->CCRNA & 0x1F00) >> 5);
 
-  info->coloroffset = (varVdp2Regs->CRAOFA & 0x70) << 4;
-  info->linecheck_mask = 0x02;
+  info.coloroffset = (varVdp2Regs->CRAOFA & 0x70) << 4;
+  info.linecheck_mask = 0x02;
 
   if ((varVdp2Regs->ZMXN1.all & 0x7FF00) == 0)
-    info->coordincx = 1.0f;
+    info.coordincx = 1.0f;
   else
-    info->coordincx = (float)65536 / (varVdp2Regs->ZMXN1.all & 0x7FF00);
+    info.coordincx = (float)65536 / (varVdp2Regs->ZMXN1.all & 0x7FF00);
 
   switch ((varVdp2Regs->ZMCTL >> 8) & 0x03)
   {
   case 0:
-    info->maxzoom = 1.0f;
+    info.maxzoom = 1.0f;
     break;
   case 1:
-    info->maxzoom = 0.5f;
-    //      if( info->coordincx < 0.5f )  info->coordincx = 0.5f;
+    info.maxzoom = 0.5f;
+    //      if( info.coordincx < 0.5f )  info.coordincx = 0.5f;
     break;
   case 2:
   case 3:
-    info->maxzoom = 0.25f;
-    //      if( info->coordincx < 0.25f )  info->coordincx = 0.25f;
+    info.maxzoom = 0.25f;
+    //      if( info.coordincx < 0.25f )  info.coordincx = 0.25f;
     break;
   }
   if ((varVdp2Regs->ZMYN1.all & 0x7FF00) == 0)
-    info->coordincy = 1.0f;
+    info.coordincy = 1.0f;
   else
-    info->coordincy = (float)65536 / (varVdp2Regs->ZMYN1.all & 0x7FF00);
+    info.coordincy = (float)65536 / (varVdp2Regs->ZMYN1.all & 0x7FF00);
 
 
-  info->priority = (varVdp2Regs->PRINA >> 8) & 0x7;
+  info.priority = (varVdp2Regs->PRINA >> 8) & 0x7;
 
-  info->PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG1PlaneAddr;
+  info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG1PlaneAddr;
 
-  if (((Vdp2External.disptoggle & 0x2)==0) || (info->priority == 0) ||
+  if (((Vdp2External.disptoggle & 0x2)==0) || (info.priority == 0) ||
     (varVdp2Regs->BGON & 0x1 && (varVdp2Regs->CHCTLA & 0x70) >> 4 == 4)) // If NBG0 16M mode is enabled, don't draw
     return;
 
-  ReadLineScrollData(info, varVdp2Regs->SCRCTL >> 8, varVdp2Regs->LSTA1.all);
-  info->lineinfo = lineNBG1;
-  Vdp2GenLineinfo(info);
+  ReadLineScrollData(&info, varVdp2Regs->SCRCTL >> 8, varVdp2Regs->LSTA1.all);
+  info.lineinfo = lineNBG1;
+  Vdp2GenLineinfo(&info);
   if (varVdp2Regs->SCRCTL & 0x100)
   {
-    info->isverticalscroll = 1;
+    info.isverticalscroll = 1;
     if (varVdp2Regs->SCRCTL & 0x1)
     {
-      info->verticalscrolltbl = 4 + ((varVdp2Regs->VCSTA.all & 0x7FFFE) << 1);
-      info->verticalscrollinc = 8;
+      info.verticalscrolltbl = 4 + ((varVdp2Regs->VCSTA.all & 0x7FFFE) << 1);
+      info.verticalscrollinc = 8;
     }
     else
     {
-      info->verticalscrolltbl = (varVdp2Regs->VCSTA.all & 0x7FFFE) << 1;
-      info->verticalscrollinc = 4;
+      info.verticalscrolltbl = (varVdp2Regs->VCSTA.all & 0x7FFFE) << 1;
+      info.verticalscrollinc = 4;
     }
   }
   else
-    info->isverticalscroll = 0;
+    info.isverticalscroll = 0;
 
-  if (info->isbitmap)
+  if (info.isbitmap)
   {
 
-    if (info->coordincx != 1.0f || info->coordincy != 1.0f) {
-      info->sh = (varVdp2Regs->SCXIN1 & 0x7FF);
-      info->sv = (varVdp2Regs->SCYIN1 & 0x7FF);
-      info->x = 0;
-      info->y = 0;
-      info->vertices[0] = 0;
-      info->vertices[1] = 0;
-      info->vertices[2] = _Ygl->rwidth;
-      info->vertices[3] = 0;
-      info->vertices[4] = _Ygl->rwidth;
-      info->vertices[5] = _Ygl->rheight;
-      info->vertices[6] = 0;
-      info->vertices[7] = _Ygl->rheight;
-      vdp2draw_struct infotmp = *info;
+    if (info.coordincx != 1.0f || info.coordincy != 1.0f) {
+      info.sh = (varVdp2Regs->SCXIN1 & 0x7FF);
+      info.sv = (varVdp2Regs->SCYIN1 & 0x7FF);
+      info.x = 0;
+      info.y = 0;
+      info.vertices[0] = 0;
+      info.vertices[1] = 0;
+      info.vertices[2] = _Ygl->rwidth;
+      info.vertices[3] = 0;
+      info.vertices[4] = _Ygl->rwidth;
+      info.vertices[5] = _Ygl->rheight;
+      info.vertices[6] = 0;
+      info.vertices[7] = _Ygl->rheight;
+      vdp2draw_struct infotmp = info;
       infotmp.cellw = _Ygl->rwidth;
       if (_Ygl->rheight >= 448)
         infotmp.cellh = (_Ygl->rheight >> 1);
       else
         infotmp.cellh = _Ygl->rheight;
       YglQuad(&infotmp, &texture, &tmpc, YglTM_vdp2);
-      Vdp2DrawBitmapCoordinateInc(info, &texture, varVdp2Regs);
+      Vdp2DrawBitmapCoordinateInc(&info, &texture, varVdp2Regs);
     }
     else {
 
       int xx, yy;
       int isCached = 0;
 
-      if (info->islinescroll) // Nights Movie
+      if (info.islinescroll) // Nights Movie
       {
-        info->sh = (varVdp2Regs->SCXIN1 & 0x7FF);
-        info->sv = (varVdp2Regs->SCYIN1 & 0x7FF);
-        info->x = 0;
-        info->y = 0;
-        info->vertices[0] = 0;
-        info->vertices[1] = 0;
-        info->vertices[2] = _Ygl->rwidth;
-        info->vertices[3] = 0;
-        info->vertices[4] = _Ygl->rwidth;
-        info->vertices[5] = _Ygl->rheight;
-        info->vertices[6] = 0;
-        info->vertices[7] = _Ygl->rheight;
-        vdp2draw_struct infotmp = *info;
+        info.sh = (varVdp2Regs->SCXIN1 & 0x7FF);
+        info.sv = (varVdp2Regs->SCYIN1 & 0x7FF);
+        info.x = 0;
+        info.y = 0;
+        info.vertices[0] = 0;
+        info.vertices[1] = 0;
+        info.vertices[2] = _Ygl->rwidth;
+        info.vertices[3] = 0;
+        info.vertices[4] = _Ygl->rwidth;
+        info.vertices[5] = _Ygl->rheight;
+        info.vertices[6] = 0;
+        info.vertices[7] = _Ygl->rheight;
+        vdp2draw_struct infotmp = info;
         infotmp.cellw = _Ygl->rwidth;
         infotmp.cellh = _Ygl->rheight;
         YglQuad(&infotmp, &texture, &tmpc, YglTM_vdp2);
-        Vdp2DrawBitmapLineScroll(info, &texture, _Ygl->rwidth, _Ygl->rheight, varVdp2Regs);
+        Vdp2DrawBitmapLineScroll(&info, &texture, _Ygl->rwidth, _Ygl->rheight, varVdp2Regs);
 
       }
       else {
-        yy = info->y;
-        while (yy + info->y < _Ygl->rheight)
+        yy = info.y;
+        while (yy + info.y < _Ygl->rheight)
         {
-          xx = info->x;
-          while (xx + info->x < _Ygl->rwidth)
+          xx = info.x;
+          while (xx + info.x < _Ygl->rwidth)
           {
-            info->vertices[0] = xx;
-            info->vertices[1] = yy;
-            info->vertices[2] = (xx + info->cellw);
-            info->vertices[3] = yy;
-            info->vertices[4] = (xx + info->cellw);
-            info->vertices[5] = (yy + info->cellh);
-            info->vertices[6] = xx;
-            info->vertices[7] = (yy + info->cellh);
+            info.vertices[0] = xx;
+            info.vertices[1] = yy;
+            info.vertices[2] = (xx + info.cellw);
+            info.vertices[3] = yy;
+            info.vertices[4] = (xx + info.cellw);
+            info.vertices[5] = (yy + info.cellh);
+            info.vertices[6] = xx;
+            info.vertices[7] = (yy + info.cellh);
             if (isCached == 0)
             {
-              YglQuad(info, &texture, &tmpc, YglTM_vdp2);
-              if (info->islinescroll) {
-                Vdp2DrawBitmapLineScroll(info, &texture, info->cellw, info->cellh, varVdp2Regs);
+              YglQuad(&info, &texture, &tmpc, YglTM_vdp2);
+              if (info.islinescroll) {
+                Vdp2DrawBitmapLineScroll(&info, &texture, info.cellw, info.cellh, varVdp2Regs);
               }
               else {
-                requestDrawCell(info, &texture, varVdp2Regs);
+                requestDrawCell(&info, &texture, varVdp2Regs);
               }
               isCached = 1;
             }
             else {
-              YglCachedQuad(info, &tmpc, YglTM_vdp2);
+              YglCachedQuad(&info, &tmpc, YglTM_vdp2);
             }
-            xx += info->cellw;
+            xx += info.cellw;
           }
-          yy += info->cellh;
+          yy += info.cellh;
         }
       }
     }
   }
   else {
-    if (info->islinescroll) {
-      info->sh = (varVdp2Regs->SCXIN1 & 0x7FF);
-      info->sv = (varVdp2Regs->SCYIN1 & 0x7FF);
-      info->x = 0;
-      info->y = 0;
-      info->vertices[0] = 0;
-      info->vertices[1] = 0;
-      info->vertices[2] = _Ygl->rwidth;
-      info->vertices[3] = 0;
-      info->vertices[4] = _Ygl->rwidth;
-      info->vertices[5] = _Ygl->rheight;
-      info->vertices[6] = 0;
-      info->vertices[7] = _Ygl->rheight;
-      vdp2draw_struct infotmp = *info;
+    if (info.islinescroll) {
+      info.sh = (varVdp2Regs->SCXIN1 & 0x7FF);
+      info.sv = (varVdp2Regs->SCYIN1 & 0x7FF);
+      info.x = 0;
+      info.y = 0;
+      info.vertices[0] = 0;
+      info.vertices[1] = 0;
+      info.vertices[2] = _Ygl->rwidth;
+      info.vertices[3] = 0;
+      info.vertices[4] = _Ygl->rwidth;
+      info.vertices[5] = _Ygl->rheight;
+      info.vertices[6] = 0;
+      info.vertices[7] = _Ygl->rheight;
+      vdp2draw_struct infotmp = info;
       infotmp.cellw = _Ygl->rwidth;
       infotmp.cellh = _Ygl->rheight;
       infotmp.flipfunction = 0;
 
       YglQuad(&infotmp, &texture, &tmpc, YglTM_vdp2);
-      Vdp2DrawMapPerLine(info, &texture, varVdp2Regs);
+      Vdp2DrawMapPerLine(&info, &texture, varVdp2Regs);
     }
     else {
       //Vdp2DrawMap(&info, &texture);
-      info->x = varVdp2Regs->SCXIN1 & 0x7FF;
-      info->y = varVdp2Regs->SCYIN1 & 0x7FF;
-      Vdp2DrawMapTest(info, &texture, varVdp2Regs);
+      info.x = varVdp2Regs->SCXIN1 & 0x7FF;
+      info.y = varVdp2Regs->SCYIN1 & 0x7FF;
+      Vdp2DrawMapTest(&info, &texture, varVdp2Regs);
     }
   }
   executeDrawCell();
-}
-
-static void Vdp2DrawNBG1(Vdp2 *varVdp2Regs)
-{
-  int nbZone = 1;
-  int lastLine = 0;
-  int line;
-  int max = (yabsys.VBlankLineCount >= 270)?270:yabsys.VBlankLineCount;
-  vdp2draw_struct *info;
-  for (line = 2; line<max; line++) {
-    if (!samePriority(NBG1, &Vdp2Lines[line-1], &Vdp2Lines[line])) {
-      info = (vdp2draw_struct *)calloc(1, sizeof(vdp2draw_struct));
-      info->startLine = lastLine;
-      info->endLine = line;
-      lastLine = line;
-      LOG_AREA("NBG1 Draw from %d to %d %x\n", info->startLine, info->endLine, varVdp2Regs->BGON);
-      Vdp2DrawNBG1_part(info, &Vdp2Lines[info->startLine]);
-    }
-  }
-  info = (vdp2draw_struct *)calloc(1, sizeof(vdp2draw_struct));
-  info->startLine = lastLine;
-  info->endLine = line;
-  lastLine = line;
-  LOG_AREA("NBG1 Draw from %d to %d %x\n", info->startLine, info->endLine, varVdp2Regs->BGON);
-  Vdp2DrawNBG1_part(info, &Vdp2Lines[info->startLine]);
-
 }
 
 //////////////////////////////////////////////////////////////////////////////
