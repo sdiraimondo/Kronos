@@ -2270,7 +2270,16 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
   }
 }
 
-
+static int getPriority(int id, Vdp2 *a) {
+  switch (id) {
+  case NBG0:
+      return (a->PRINA & 0x7);
+  case NBG1:
+    return ((a->PRINA >> 8) & 0x7);
+  default:
+    return 0;
+  }
+}
 //////////////////////////////////////////////////////////////////////////////
 
 static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 *varVdp2Regs) {
@@ -2420,6 +2429,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 
         prepagex = pagex;
         prepagey = pagey;
       }
+      info->priority = getPriority(info->idScreen, &Vdp2Lines[v]); //MapPerLine is called only for NBG0 and NBG1
       int priority = info->priority;
       if (info->specialprimode == 1) {
         info->priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
