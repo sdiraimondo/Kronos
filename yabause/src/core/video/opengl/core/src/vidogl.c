@@ -4671,7 +4671,7 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 int sameVDP2RegRBG0(Vdp2 *a, Vdp2 *b)
 {
   if ((a->BGON & 0x1010) != (b->BGON & 0x1010)) return 0;
-//  if ((a->PRIR & 0x7) != (b->PRIR & 0x7)) return 0;
+  if ((a->PRIR & 0x7) != (b->PRIR & 0x7)) return 0;
 //  if ((a->CCCTL & 0xFF10) != (b->CCCTL & 0xFF10)) return 0;
 //  if ((a->SFPRMD & 0x300) != (b->SFPRMD & 0x300)) return 0;
 //  if ((a->CHCTLB & 0x7700) != (b->CHCTLB & 0x7700)) return 0;
@@ -4708,7 +4708,7 @@ int sameVDP2RegRBG1(Vdp2 *a, Vdp2 *b)
 {
 
   if ((a->BGON & 0x130) != (b->BGON & 0x130)) return 0;
-//  if ((a->PRINA & 0x7) != (b->PRINA & 0x7)) return 0;
+  if ((a->PRINA & 0x7) != (b->PRINA & 0x7)) return 0;
 //  if ((a->CCCTL & 0xFF01) != (b->CCCTL & 0xFF01)) return 0;
 //  if ((a->BMPNA & 0x7) != (b->BMPNA & 0x7)) return 0;
 //  if ((a->MPOFR & 0x77) != (b->MPOFR & 0x77)) return 0;
