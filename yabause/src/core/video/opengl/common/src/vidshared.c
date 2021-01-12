@@ -135,7 +135,6 @@ void FASTCALL Vdp2NBG3PlaneAddr(vdp2draw_struct *info, int i, Vdp2* regs)
 
 //////////////////////////////////////////////////////////////////////////////
 int Vdp2GetBank(Vdp2* regs, u32 addr){
-
 	// 4Mbit mode
 	if ( (regs->VRSIZE&0x8000) == 0){
 
@@ -143,7 +142,7 @@ int Vdp2GetBank(Vdp2* regs, u32 addr){
 			return VDP2_VRAM_A0;
 		}
 		else if (addr >= 0x20000 && addr < 0x40000){
-			if (regs->RAMCTL & 0x10){
+			if (regs->RAMCTL & 0x100){
 				return VDP2_VRAM_A1;
 			}
 			else{
@@ -155,7 +154,7 @@ int Vdp2GetBank(Vdp2* regs, u32 addr){
 			return VDP2_VRAM_B0;
 		}
 		else if (addr >= 0x60000 && addr < 0x80000){
-			if (regs->RAMCTL & 0x20){
+			if (regs->RAMCTL & 0x200){
 				return VDP2_VRAM_B1;
 			}
 			else{
@@ -170,7 +169,7 @@ int Vdp2GetBank(Vdp2* regs, u32 addr){
 			return VDP2_VRAM_A0;
 		}
 		else if (addr >= 0x40000 && addr < 0x80000){
-			if (regs->RAMCTL & 0x10){
+			if (regs->RAMCTL & 0x100){
 				return VDP2_VRAM_A1;
 			}
 			else{
@@ -181,7 +180,7 @@ int Vdp2GetBank(Vdp2* regs, u32 addr){
 			return VDP2_VRAM_B0;
 		}
 		else if (addr >= 0xc0000 && addr < 0x100000){
-			if (regs->RAMCTL & 0x20){
+			if (regs->RAMCTL & 0x200){
 				return VDP2_VRAM_B1;
 			}
 			else{
@@ -248,7 +247,6 @@ void setupPerdot(vdp2rotationparameter_struct *parameter, u32 addr, Vdp2* regs, 
 
   //Use the effective adress of the coeficien table to determine if it is per dot.
   int bank = Vdp2GetBank(regs, parameter->coeftbladdr);
-
   switch (bank)
   {
   case VDP2_VRAM_A0:
@@ -264,7 +262,7 @@ void setupPerdot(vdp2rotationparameter_struct *parameter, u32 addr, Vdp2* regs, 
     perdot = ((regs->RAMCTL >> 6) & 0x03);
     break;
   }
-  if ((perdot == 1)||((perdot == 3)&&((Vdp2Regs->RPMD & 0x3) == 0x2))){
+  if (perdot == 1){
     // Use perdot if RAMCTL is 1 or if RAMCTL is 3 and RPMD is 2.
     int i = Vdp2RamReadLong(NULL, ram, addr);
     float ftmp = (float)(signed)((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000)) / 65536;
