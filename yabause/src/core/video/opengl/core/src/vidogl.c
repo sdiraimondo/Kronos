@@ -2309,14 +2309,13 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 
   int prepagey = -1;
   int mapid = 0;
   int premapid = -1;
+  int scaleh = 0;
 
   info->patternpixelwh = 8 * info->patternwh;
   info->draww = _Ygl->rwidth;
 
   if (_Ygl->rheight >= 448)
-    info->drawh = (_Ygl->rheight >> 1);
-  else
-    info->drawh = _Ygl->rheight;
+    scaleh = 1;
 
   const int incv = 1.0 / info->coordincy*256.0;
   const int res_shift = 0;
@@ -2429,7 +2428,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 
         prepagex = pagex;
         prepagey = pagey;
       }
-      info->priority = getPriority(info->idScreen, &Vdp2Lines[v]); //MapPerLine is called only for NBG0 and NBG1
+      info->priority = getPriority(info->idScreen, &Vdp2Lines[v>>scaleh]); //MapPerLine is called only for NBG0 and NBG1
       int priority = info->priority;
       if (info->specialprimode == 1) {
         info->priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
