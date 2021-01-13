@@ -35,7 +35,7 @@ extern SH2Interface_struct *SH2CoreList[];
 
 void OnchipReset(SH2_struct *context);
 static void FRTExec(SH2_struct *context);
-static void WDTExec(SH2_struct *context, u32 cycles);
+static void WDTExec(SH2_struct *context);
 u8 SCIReceiveByte(void);
 void SCITransmitByte(u8);
 
@@ -147,6 +147,8 @@ CACHE_LOG("%s reset\n", (context==SSH2)?"SSH2":"MSH2" );
    // Internal variables
    context->delay = 0x00000000;
    context->cycles = 0;
+   context->frtcycles = 0;
+   context->wdtcycles = 0;
 
    context->frc.leftover = 0;
    context->frc.shift = 3;
@@ -193,7 +195,7 @@ void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
    u32 startCycle = context->cycles;
    SH2Core->Exec(context, cycles);
    FRTExec(context);
-   WDTExec(context, cycles);
+   WDTExec(context);
 }
 
 void FASTCALL SH2OnFrame(SH2_struct *context) {
@@ -1574,9 +1576,13 @@ void FRTExec(SH2_struct *context)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void WDTExec(SH2_struct *context, u32 cycles) {
+void WDTExec(SH2_struct *context) {
    u32 wdttemp;
    u32 mask;
+
+   u32 cycles = context->cycles - context->wdtcycles;
+
+   context->wdtcycles = context->cycles;
 
    if (!context->wdt.isenable || context->onchip.WTCSR & 0x80 || context->onchip.RSTCSR & 0x80)
       return;
