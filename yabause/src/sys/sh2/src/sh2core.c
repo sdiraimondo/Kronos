@@ -34,7 +34,7 @@ SH2Interface_struct *SH2Core=NULL;
 extern SH2Interface_struct *SH2CoreList[];
 
 void OnchipReset(SH2_struct *context);
-static void FRTExec(SH2_struct *context, u32 cycles);
+static void FRTExec(SH2_struct *context);
 static void WDTExec(SH2_struct *context, u32 cycles);
 u8 SCIReceiveByte(void);
 void SCITransmitByte(u8);
@@ -190,8 +190,9 @@ void FASTCALL SH2TestExec(SH2_struct *context, u32 cycles)
 
 void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
 {
+   u32 startCycle = context->cycles;
    SH2Core->Exec(context, cycles);
-   FRTExec(context, cycles);
+   FRTExec(context);
    WDTExec(context, cycles);
 }
 
@@ -1415,11 +1416,15 @@ void FASTCALL DataArrayWriteLong(SH2_struct *context,u32 addr, u32 val)  {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FRTExec(SH2_struct *context,u32 cycles)
+void FRTExec(SH2_struct *context)
 {
    u32 frcold;
    u32 frctemp;
    u32 mask;
+
+   u32 cycles = context->cycles - context->frtcycles;
+
+   context->frtcycles = context->cycles;
 
    frcold = frctemp = (u32)context->onchip.FRC.all;
    mask = (1 << context->frc.shift) - 1;
