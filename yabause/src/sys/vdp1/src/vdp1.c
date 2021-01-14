@@ -801,7 +801,7 @@ static int Vdp1PolygonDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_
 
   int w = (sqrt((cmd->CMDXA - cmd->CMDXB)*(cmd->CMDXA - cmd->CMDXB)) + sqrt((cmd->CMDXD - cmd->CMDXC)*(cmd->CMDXD - cmd->CMDXC)))/2;
   int h = (sqrt((cmd->CMDYA - cmd->CMDYD)*(cmd->CMDYA - cmd->CMDYD)) + sqrt((cmd->CMDYB - cmd->CMDYC)*(cmd->CMDYB - cmd->CMDYC)))/2;
-  yabsys.vdp1cycles += 16 + (w * h) + (w * 2);
+  yabsys.vdp1cycles += MIN(1000, 16 + (w * h) + (w * 2));
 
   //gouraud
   memset(cmd->G, 0, sizeof(float)*16);
