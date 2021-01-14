@@ -728,7 +728,7 @@ static int Vdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u
   if (emptyCmd(cmd)) {
     // damaged data
     yabsys.vdp1cycles += 70;
-    return -1;
+    return 0;
   }
 
   cmd->w = ((cmd->CMDSIZE >> 8) & 0x3F) * 8;
