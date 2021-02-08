@@ -68,6 +68,8 @@
 #define CDB_PLAYTYPE_SECTOR     0x01
 #define CDB_PLAYTYPE_FILE       0x02
 
+// #define CDLOG YuiMsg
+
 extern void resetSyncVideo(void);
 
 enum CDB_DATATRANSTYPE
@@ -1510,7 +1512,6 @@ void Cs2EndDataTransfer(void) {
   {
      case 0:
         // Get Sector Data
-        Cs2SetIRQ(CDB_HIRQ_EHST);
         break;
      case 2:
      {
@@ -1537,7 +1538,6 @@ void Cs2EndDataTransfer(void) {
 
         if (Cs2Area->blockfreespace == MAX_BLOCKS) Cs2Area->isonesectorstored = 0;
 
-        Cs2SetIRQ(CDB_HIRQ_EHST);
         break;
      }
      default: break;
@@ -1545,7 +1545,7 @@ void Cs2EndDataTransfer(void) {
 
   Cs2Area->cdwnum = 0;
 
-  Cs2SetIRQ(CDB_HIRQ_CMOK);
+  Cs2SetIRQ(CDB_HIRQ_EHST | CDB_HIRQ_CMOK);
 }
 
 //////////////////////////////////////////////////////////////////////////////
