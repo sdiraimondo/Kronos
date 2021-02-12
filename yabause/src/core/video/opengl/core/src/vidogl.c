@@ -4642,6 +4642,8 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   info->linecheck_mask = 0x01;
   info->priority = varVdp2Regs->PRINA & 0x7;
 
+  LOG_AREA("RGB1 prio = %d\n", info->priority);
+
   if (((Vdp2External.disptoggle & 0x20)==0) || (info->priority == 0)) {
     free(rgb);
     return;
@@ -5472,6 +5474,9 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   for (int i=info->startLine; i<info->endLine; i++) info->display[i] = info->enable;
 
   info->priority = varVdp2Regs->PRIR & 0x7;
+
+  LOG_AREA("RGB0 prio = %d\n", info->priority);
+
   if (((Vdp2External.disptoggle & 0x10)==0) || (info->priority == 0)) {
     free(rgb);
     return;
