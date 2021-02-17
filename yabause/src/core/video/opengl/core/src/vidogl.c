@@ -4707,7 +4707,6 @@ int sameVDP2RegRBG0(Vdp2 *a, Vdp2 *b)
 
 int sameVDP2RegRBG1(Vdp2 *a, Vdp2 *b)
 {
-
   if ((a->BGON & 0x130) != (b->BGON & 0x130)) return 0;
   if ((a->PRINA & 0x7) != (b->PRINA & 0x7)) return 0;
 //  if ((a->CCCTL & 0xFF01) != (b->CCCTL & 0xFF01)) return 0;
@@ -4720,7 +4719,8 @@ int sameVDP2RegRBG1(Vdp2 *a, Vdp2 *b)
 //  if ((a->SFPRMD & 0x3) != (b->SFPRMD & 0x3)) return 0;
 //  if ((a->CHCTLA & 0x7F) != (b->CHCTLA & 0x7F)) return 0;
 //  if ((a->MZCTL & 0xFF01) != (b->MZCTL & 0xFF01)) return 0;
-//  if ((a->SFCCMD &0x3) != (b->SFCCMD &0x3)) return 0;
+ if ((a->CCRNA &0x1F) != (b->CCRNA &0x1F)) return 0;
+ if ((a->SFCCMD &0x3) != (b->SFCCMD &0x3)) return 0;
 //  if ((a->SFSEL & 0x1) != (b->SFSEL & 0x1)) return 0;
 //  if ((a->SFCODE & 0xFFFF) != (b->SFCODE & 0xFFFF)) return 0;
 //  if ((a->LNCLEN & 0x1) != (b->LNCLEN & 0x1)) return 0;
