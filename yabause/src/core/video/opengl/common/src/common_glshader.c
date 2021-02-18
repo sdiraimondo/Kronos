@@ -1136,6 +1136,7 @@ ivec2 addr = ivec2(textureSize(s_back, 0) * v_texcoord.st);\n \
 colorback = texelFetch( s_back, addr,0 );\n \
 ivec2 linepos = ivec2(int( (u_vheight-PosY) * u_emu_height), 0);\n \
 linepos.y = is_perline[7];\n \
+if (mod(linepos.x,2) == nbFrame) discard;\n \
 offset_color = texelFetch( s_perline, linepos,0 ).rgb;\n \
 offset_color.rgb = (offset_color.rgb - vec3(0.5))*2.0;\n \
 addr = ivec2(tvSize * vdp1Ratio * v_texcoord.st);\n \
@@ -1676,7 +1677,7 @@ static const GLchar* Yglprg_vdp2_common_final[14] = {
 static const GLchar vdp2blit_filter_f[] =
 "vec4 getPixel(sampler2D tex, vec2 st, int deltax, int deltay) {\n"
 " ivec2 addr = ivec2(textureSize(tex, 0) * st);\n"
-" vec4 result = texelFetch( tex, addr+ivec2(deltax, deltay)-ivec2(0,nbFrame),0 );\n"
+" vec4 result = texelFetch( tex, addr+ivec2(deltax, deltay),0 );\n"
 //" result.rgb = Filter( tex, st ).rgb;\n"
 " return result;\n"
 "}\n";
