@@ -1070,7 +1070,6 @@ uniform int win0_mode; \n \
 uniform int win1; \n \
 uniform int win1_mode; \n \
 uniform int win_op; \n \
-uniform int nbFrame; \n \
 int PosY = int(gl_FragCoord.y)+1;\n \
 int PosX = int(gl_FragCoord.x);\n \
 vec2 getFBCoord(vec2 pos) {\n \
@@ -1865,11 +1864,6 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "win1"), Win1);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "win1_mode"), Win1_mode);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "win_op"), Win_op);
-  if (((varVdp2Regs->TVMD>>6)&0x3) < 2){
-    glUniform1i(glGetUniformLocation(vdp2blit_prg, "nbFrame"),2);
-  } else {
-    glUniform1i(glGetUniformLocation(vdp2blit_prg, "nbFrame"),(varVdp2Regs->TVSTAT>>1)&0x1);
-  }
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
