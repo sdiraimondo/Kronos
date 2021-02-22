@@ -2346,7 +2346,7 @@ static const char fblitnear_img[] =
   static const char fbobsecure_img[] =
     "vec4 Filter( sampler2D textureSampler, vec2 TexCoord ) \n"
     "{ \n"
-    "     ivec2 coord = ivec2(textureSize(textureSampler,0)*TexCoord);\n"
+    "     ivec2 coord = ivec2(vec2(textureSize(textureSampler,0))*TexCoord);\n"
     " if ((coord.y&0x1)!=field) {\n"
           "vec4 interpol = mix( \n"
             "mix( \n"
@@ -2380,7 +2380,7 @@ static const char fblitnear_img[] =
     static const char fbob_img[] =
       "vec4 Filter( sampler2D textureSampler, vec2 TexCoord ) \n"
       "{ \n"
-      "     ivec2 coord = ivec2(textureSize(textureSampler,0)*TexCoord);\n"
+      "     ivec2 coord = ivec2(vec2(textureSize(textureSampler,0))*TexCoord);\n"
       " if ((coord.y&0x1)==field)\n"
       "     return  \n"
               "mix( \n"
