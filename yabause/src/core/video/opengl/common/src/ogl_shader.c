@@ -2481,7 +2481,7 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
   }
   //if ((aamode == AA_NONE) && ((w != dispw) || (h != disph))) aamode = AA_BILINEAR_FILTER;
   if (((((Vdp2Regs->TVMD>>6)&0x3) == 0) || (((Vdp2Regs->TVMD>>6)&0x3) == 3))) {
-    if ((aamode == AA_BOB_FILTER) || (aamode == AA_BOB_FILTER)) {
+    if ((aamode == AA_BOB_FILTER) || (aamode == AA_BOB_SECURE_FILTER)) {
       aamode = AA_NONE;
     }
   }
