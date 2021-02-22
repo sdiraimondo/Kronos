@@ -2347,7 +2347,7 @@ static const char fblitnear_img[] =
     "vec4 Filter( sampler2D textureSampler, vec2 TexCoord ) \n"
     "{ \n"
     "     ivec2 coord = ivec2(vec2(textureSize(textureSampler,0))*TexCoord);\n"
-    " if ((coord.y&0x1)!=field) {\n"
+    " if ((coord.y&0x1)!=(field&0x1)) {\n"
           "vec4 interpol = mix( \n"
             "mix( \n"
               "mix( \n"
@@ -2381,7 +2381,7 @@ static const char fblitnear_img[] =
       "vec4 Filter( sampler2D textureSampler, vec2 TexCoord ) \n"
       "{ \n"
       "     ivec2 coord = ivec2(vec2(textureSize(textureSampler,0))*TexCoord);\n"
-      " if ((coord.y&0x1)==field)\n"
+      " if ((coord.y&0x1)!=(field&0x1))\n"
       "     return  \n"
               "mix( \n"
                 "texelFetch( textureSampler, ivec2(coord.x,coord.y-1) , 0 ), \n"
@@ -2479,9 +2479,12 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
     width = scale*_Ygl->rwidth;
     height = scale*_Ygl->rheight;
   }
-
   //if ((aamode == AA_NONE) && ((w != dispw) || (h != disph))) aamode = AA_BILINEAR_FILTER;
-
+  if (((((Vdp2Regs->TVMD>>6)&0x3) == 0) || (((Vdp2Regs->TVMD>>6)&0x3) == 3))) {
+    if ((aamode == AA_BOB_FILTER) || (aamode == AA_BOB_FILTER)) {
+      aamode = AA_NONE;
+    }
+  }
   if ((blit_prg == -1) || (blit_mode != aamode) || (scanline != _Ygl->scanline)){
     GLuint vshader;
     GLuint fshader;
