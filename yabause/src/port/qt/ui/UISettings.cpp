@@ -87,7 +87,9 @@ const Items mCartridgeTypes = Items()
 const Items mVideoFilterMode = Items()
 	<< Item("0", "None")
         << Item("1", "Bilinear")
-	<< Item("2", "BiCubic");
+	<< Item("2", "BiCubic")
+	<< Item("3", "Deinterlacing Bob")
+	<< Item("4", "Deinterlacing Secure Bob");
 
 const Items mUpscaleFilterMode = Items()
 	<< Item("0", "None")

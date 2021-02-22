@@ -2298,6 +2298,7 @@ static int u_w = -1;
 static int u_h = -1;
 static int u_l = -1;
 static int u_d = -1;
+static int u_f = -1;
 static int outputSize = -1;
 static int inputSize = -1;
 
@@ -2323,6 +2324,7 @@ static const char fblit_head[] =
   "uniform float fHeight; \n"
   "uniform vec2 lineNumber; \n"
   "uniform float decim; \n"
+  "uniform int field; \n"
   "in highp vec2 vTexCoord;     \n"
   "uniform sampler2D u_Src;     \n"
   "out vec4 fragColor; \n";
@@ -2335,12 +2337,61 @@ static const char fblit_img[] =
 static const char fblit_img_end[] =
   "} \n";
 
-/////////////
 static const char fblitnear_img[] =
   "vec4 Filter( sampler2D textureSampler, vec2 TexCoord ) \n"
   "{ \n"
   "     return texture( textureSampler, TexCoord ) ; \n"
   "} \n";
+
+  static const char fbobsecure_img[] =
+    "vec4 Filter( sampler2D textureSampler, vec2 TexCoord ) \n"
+    "{ \n"
+    "     ivec2 coord = ivec2(textureSize(textureSampler,0)*TexCoord);\n"
+    " if ((coord.y&0x1)!=field) {\n"
+          "vec4 interpol = mix( \n"
+            "mix( \n"
+              "mix( \n"
+                "texelFetch( textureSampler, ivec2(coord.x,coord.y-1) , 0 ), \n"
+                "texelFetch( textureSampler, ivec2(coord.x,coord.y+1) , 0 ), \n"
+                "vec4(0.5) \n"
+              "), \n"
+              "mix( \n"
+                "texelFetch( textureSampler, ivec2(coord.x+1,coord.y-1) , 0 ), \n"
+                "texelFetch( textureSampler, ivec2(coord.x+1,coord.y+1) , 0 ), \n"
+                "vec4(0.5) \n"
+              "), \n"
+              "vec4(0.5) \n"
+            "), \n"
+            "mix( \n"
+              "texelFetch( textureSampler, ivec2(coord.x,coord.y-1) , 0 ), \n"
+              "texelFetch( textureSampler, ivec2(coord.x,coord.y+1) , 0 ), \n"
+              "vec4(0.5) \n"
+            "), \n"
+            "vec4(0.5) \n"
+          "); \n"
+    "vec4 cur = texelFetch( textureSampler, ivec2(coord.x,coord.y) , 0 ); \n"
+    "if (distance(cur, interpol) <= 0.2f) return cur; else return interpol;\n"
+    "}\n"
+    " else"
+    "     return texelFetch( textureSampler, coord, 0 ) ; \n"
+    "} \n";
+
+
+    static const char fbob_img[] =
+      "vec4 Filter( sampler2D textureSampler, vec2 TexCoord ) \n"
+      "{ \n"
+      "     ivec2 coord = ivec2(textureSize(textureSampler,0)*TexCoord);\n"
+      " if ((coord.y&0x1)==field)\n"
+      "     return  \n"
+              "mix( \n"
+                "texelFetch( textureSampler, ivec2(coord.x,coord.y-1) , 0 ), \n"
+                "texelFetch( textureSampler, ivec2(coord.x,coord.y+1) , 0 ), \n"
+                "vec4(0.5) \n"
+              "); \n"
+      " else"
+      "     return texelFetch( textureSampler, coord, 0 ) ; \n"
+      "} \n";
+
 
 static const char fblitbilinear_img[] =
   "// Function to get a texel data from a texture with GL_NEAREST property. \n"
@@ -2385,6 +2436,9 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
   const GLchar * fblit_img_scanline_v[] = { fblit_head, fblitnear_img, fblit_img, Yglprg_blit_scanline_f, fblit_img_end, NULL };
   const GLchar * fblitbilinear_img_scanline_v[] = { fblit_head, fblitnear_img, fblit_img, Yglprg_blit_scanline_f, fblit_img_end, NULL };
   const GLchar * fblitbicubic_img_scanline_v[] = { fblit_head, fblitbicubic_img, fblit_img, Yglprg_blit_scanline_f, fblit_img_end, NULL };
+
+  const GLchar * fblit_bob_img_v[] = { fblit_head, fbob_img, fblit_img, fblit_img_end, NULL };
+  const GLchar * fblit_bob_secure_img_v[] = { fblit_head, fbobsecure_img, fblit_img, fblit_img_end, NULL };
   int aamode = _Ygl->aamode;
 
   float const vertexPosition[] = {
@@ -2468,9 +2522,17 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
         case AA_BICUBIC_FILTER:
           glShaderSource(fshader, 4, fblitbicubic_img_v, NULL);
           break;
+        case AA_BOB_FILTER:
+          glShaderSource(fshader, 4, fblit_bob_img_v, NULL);
+          break;
+        case AA_BOB_SECURE_FILTER:
+          glShaderSource(fshader, 4, fblit_bob_secure_img_v, NULL);
+          break;
       }
     } else {
       switch(aamode) {
+        case AA_BOB_FILTER:
+        case AA_BOB_SECURE_FILTER:
         case AA_NONE:
           glShaderSource(fshader, 5, fblit_img_scanline_v, NULL);
           break;
@@ -2508,6 +2570,7 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
     u_h = glGetUniformLocation(blit_prg, "fHeight");
     u_l = glGetUniformLocation(blit_prg, "lineNumber");
     u_d = glGetUniformLocation(blit_prg, "decim");
+    u_f = glGetUniformLocation(blit_prg, "field");
   }
   else{
     GLUSEPROG(blit_prg);
@@ -2539,6 +2602,7 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
   decim = (disph + nbLines) / nbLines;
   if (decim < 2) decim = 2;
   glUniform1f(u_d, (float)decim);
+  glUniform1i(u_f, (Vdp2Regs->TVSTAT & 0x2)>>1);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, tex);
