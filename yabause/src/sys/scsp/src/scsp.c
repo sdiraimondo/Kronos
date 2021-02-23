@@ -6230,8 +6230,23 @@ SoundLoadState (FILE *fp, int version, int size)
   // Now for the SCSP registers
   yread (&check, (void *)scsp_reg, 0x1000, 1, fp);
 
+  if (version >= 4) {
+    //Plfo
+    yread (&check, (void *)plfo.saw_table, 256, 1, fp);
+    yread (&check, (void *)plfo.square_table, 256, 1, fp);
+    yread (&check, (void *)plfo.tri_table, 256, 1, fp);
+    yread (&check, (void *)plfo.saw_table, 256, 1, fp);
+    //Alfo
+    yread (&check, (void *)alfo.saw_table, 256, 1, fp);
+    yread (&check, (void *)alfo.square_table, 256, 1, fp);
+    yread (&check, (void *)alfo.tri_table, 256, 1, fp);
+    yread (&check, (void *)alfo.saw_table, 256, 1, fp);
+  }
+
   // Lastly, sound ram
   yread (&check, (void *)SoundRam, 0x80000, 1, fp);
+
+  yread (&check, (void *)cddabuf.data, CDDA_NUM_BUFFERS*2352, 1, fp);
 
   if (version > 1)
     {
