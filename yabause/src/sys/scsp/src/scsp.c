@@ -613,7 +613,7 @@ void op2(struct Slot * slot, struct Scsp * s)
 //waveform dram read
 void op3(struct Slot * slot)
 {
-   u32 addr = (slot->state.address_pointer) & 0x7FFFF;
+   u32 addr = (slot->state.address_pointer);
 
    if (slot->state.attenuation >= 0x3bf)
       return;
