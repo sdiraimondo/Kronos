@@ -38,6 +38,7 @@
 /* ================================ INCLUDES ============================== */
 /* ======================================================================== */
 
+#include <stdio.h>
 #include "m68kops.h"
 #include "m68kcpu.h"
 
@@ -529,6 +530,139 @@ void m68k_set_reg(m68k_register_t regnum, unsigned int value)
 		case M68K_REG_CPU_TYPE: m68k_set_cpu_type(value); return;
 		default:			return;
 	}
+}
+
+
+static struct {
+	uint16 sr;
+	int stopped;
+	int halted;
+} m68k_substate;
+
+void m68k_save_context(FILE *fp){
+	int i;
+	uint32 regd[8];
+	uint32 rega[8];
+	uint32 val;
+
+	m68k_substate.sr = m68ki_get_sr();
+	m68k_substate.stopped = (CPU_STOPPED & STOP_LEVEL_STOP) != 0;
+	m68k_substate.halted  = (CPU_STOPPED & STOP_LEVEL_HALT) != 0;
+
+	for (i = 0; i<8; i++) {
+		regd[i]=m68k_get_reg(NULL, M68K_REG_D0 + i);
+	}
+	fwrite((void *)&regd, sizeof(uint32), 8, fp );
+	for (i = 0; i<8; i++) {
+		rega[i]=m68k_get_reg(NULL, M68K_REG_A0 + i);
+	}
+	fwrite((void *)&rega, sizeof(uint32), 8, fp );
+
+	val = m68k_get_reg(NULL, M68K_REG_PPC);
+	fwrite((void *)&val, sizeof(uint32), 1, fp );
+
+	val = m68k_get_reg(NULL, M68K_REG_PC);
+	fwrite((void *)&val, sizeof(uint32), 1, fp );
+
+	val = m68k_get_reg(NULL, M68K_REG_USP);
+	fwrite((void *)&val, sizeof(uint32), 1, fp );
+
+	val = m68k_get_reg(NULL, M68K_REG_ISP);
+	fwrite((void *)&val, sizeof(uint32), 1, fp );
+
+	val = m68k_get_reg(NULL, M68K_REG_MSP);
+	fwrite((void *)&val, sizeof(uint32), 1, fp );
+
+	val = m68k_get_reg(NULL, M68K_REG_VBR);
+	fwrite((void *)&val, sizeof(uint32), 1, fp );
+
+	val = m68k_get_reg(NULL, M68K_REG_SFC);
+	fwrite((void *)&val, sizeof(uint32), 1, fp );
+
+	val = m68k_get_reg(NULL, M68K_REG_DFC);
+	fwrite((void *)&val, sizeof(uint32), 1, fp );
+
+	val = m68k_get_reg(NULL, M68K_REG_CACR);
+	fwrite((void *)&val, sizeof(uint32), 1, fp );
+
+	val = m68k_get_reg(NULL, M68K_REG_CAAR);
+	fwrite((void *)&val, sizeof(uint32), 1, fp );
+
+	val = m68k_get_reg(NULL, M68K_REG_SR);
+	fwrite((void *)&m68k_substate.sr, sizeof(uint16), 1, fp );
+
+	fwrite((void *)&CPU_INT_LEVEL, sizeof(uint32), 1, fp );
+
+	fwrite((void *)&CPU_INT_CYCLES, sizeof(uint32), 1, fp );
+
+	fwrite((void *)&m68k_substate.stopped, sizeof(int), 1, fp );
+	fwrite((void *)&m68k_substate.halted, sizeof(int), 1, fp );
+	fwrite((void *)&CPU_PREF_ADDR, sizeof(uint32), 1, fp );
+	fwrite((void *)&CPU_PREF_DATA, sizeof(uint32), 1, fp );
+}
+
+void m68k_load_context(FILE *fp){
+	int i;
+	uint32 regd[8];
+	uint32 rega[8];
+	uint32 val;
+
+	fread((void *)&regd, sizeof(uint32), 8, fp );
+	for (i = 0; i<8; i++) {
+		m68k_set_reg(M68K_REG_D0 + i, regd[i]);
+	}
+
+	fread((void *)&rega, sizeof(uint32), 8, fp );
+	for (i = 0; i<8; i++) {
+		m68k_set_reg(M68K_REG_A0 + i, rega[i]);
+	}
+
+	fread((void *)&val, sizeof(uint32), 1, fp );
+	m68k_set_reg(M68K_REG_PPC, val);
+
+	fread((void *)&val, sizeof(uint32), 1, fp );
+	m68k_set_reg(M68K_REG_PC, val);
+
+	fread((void *)&val, sizeof(uint32), 1, fp );
+	m68k_set_reg(M68K_REG_USP, val);
+
+	fread((void *)&val, sizeof(uint32), 1, fp );
+	m68k_set_reg(M68K_REG_ISP, val);
+
+	fread((void *)&val, sizeof(uint32), 1, fp );
+	m68k_set_reg(M68K_REG_MSP, val);
+
+	fread((void *)&val, sizeof(uint32), 1, fp );
+	m68k_set_reg(M68K_REG_VBR, val);
+
+	fread((void *)&val, sizeof(uint32), 1, fp );
+	m68k_set_reg(M68K_REG_SFC, val);
+
+	fread((void *)&val, sizeof(uint32), 1, fp );
+	m68k_set_reg(M68K_REG_DFC, val);
+
+	fread((void *)&val, sizeof(uint32), 1, fp );
+	m68k_set_reg(M68K_REG_CACR, val);
+
+	fread((void *)&val, sizeof(uint32), 1, fp );
+	m68k_set_reg(M68K_REG_CAAR, val);
+
+	fread((void *)&m68k_substate.sr, sizeof(uint16), 1, fp );
+	m68k_set_reg(M68K_REG_SR, val);
+
+	fread((void *)&CPU_INT_LEVEL, sizeof(uint32), 1, fp );
+
+	fread((void *)&CPU_INT_CYCLES, sizeof(uint32), 1, fp );
+
+	fread((void *)&m68k_substate.stopped, sizeof(int), 1, fp );
+	fread((void *)&m68k_substate.halted, sizeof(int), 1, fp );
+	fread((void *)&CPU_PREF_ADDR, sizeof(uint32), 1, fp );
+	fread((void *)&CPU_PREF_DATA, sizeof(uint32), 1, fp );
+
+	m68ki_set_sr_noint_nosp(m68k_substate.sr);
+	CPU_STOPPED = m68k_substate.stopped ? STOP_LEVEL_STOP : 0
+						| m68k_substate.halted  ? STOP_LEVEL_HALT : 0;
+	m68ki_jump(REG_PC);
 }
 
 /* Set the callbacks */
