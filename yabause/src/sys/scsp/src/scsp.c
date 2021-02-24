@@ -6161,11 +6161,14 @@ SoundLoadState (FILE *fp, int version, int size)
   u8 nextphase;
   IOCheck_struct check = { 0, 0 };
 
-
+  u8 newM68state;
   // Read 68k registers first
-  yread(&check, (void *)&IsM68KRunning, 1, 1, fp);
+  yread(&check, (void *)&newM68state, 1, 1, fp);
   yread(&check, (void *)&savedcycles, sizeof(s32), 1, fp);
-
+if (IsM68KRunning != newM68state) {
+  if (newM68state) M68KStart();
+  else M68KStop();
+}
 #ifdef IMPROVED_SAVESTATES
   if (version >= 4){
     M68K->LoadState(fp);

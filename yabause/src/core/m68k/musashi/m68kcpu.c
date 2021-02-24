@@ -681,7 +681,7 @@ void m68k_load_context(FILE *fp){
 	m68k_set_reg(M68K_REG_CAAR, val);
 
 	fread((void *)&m68k_substate.sr, sizeof(uint16), 1, fp );
-	m68k_set_reg(M68K_REG_SR, val);
+	m68ki_set_sr_noint_nosp(val);
 
 	fread((void *)&CPU_INT_LEVEL, sizeof(uint32), 1, fp );
 
