@@ -542,13 +542,11 @@ void op2(struct Slot * slot, struct Scsp * s)
 
    //address pointer
 
-   YuiMsg("Op2 %x %x %x\n", slot->state.sample_offset, slot->regs.lea,slot->regs.lpctl);
    if (slot->regs.lpctl == 0)//no loop
    {
       slot->state.sample_offset += sample_delta;
       if (slot->state.sample_offset >= slot->regs.lea)
       {
-        YuiMsg("Plafond attenuation\n");
          slot->state.attenuation = 0x3ff;
       }
    }
@@ -632,7 +630,6 @@ void op3(struct Slot * slot)
 void change_envelope_state(struct Slot * slot, enum EnvelopeStates new_state)
 {
   if (slot->state.envelope != new_state) {
-    YuiMsg("Change Enveloppe from %d to %d\n", slot->state.envelope, new_state);
    slot->state.envelope = new_state;
    slot->state.step_count = 0;
   }
@@ -640,7 +637,6 @@ void change_envelope_state(struct Slot * slot, enum EnvelopeStates new_state)
 
 int need_envelope_step(int effective_rate, u32 sample_counter, struct Slot* slot)
 {
-   YuiMsg("Need env state %x %x %x %x\n", effective_rate, sample_counter, slot->state.envelope_steps_taken, slot->state.step_count);
    if (sample_counter == 0)
       return 0;
 
@@ -709,8 +705,6 @@ void do_decay(struct Slot * slot, int rate_in)
    int sample_mod_4 = slot->state.envelope_steps_taken & 3;
    int decay_rate;
 
-   YuiMsg("Do_decay Rate %x\n", rate);
-
    if (rate <= 0x30)
       decay_rate = decay_rate_table[0][sample_mod_4];
    else
@@ -719,7 +713,6 @@ void do_decay(struct Slot * slot, int rate_in)
    if (need_envelope_step(rate, slot->state.sample_counter, slot))
    {
       if (slot->state.attenuation < 0x3bf) {
-        YuiMsg("Add decay\n");
          slot->state.attenuation += decay_rate;
       }
    }
@@ -736,7 +729,6 @@ void op4(struct Slot * slot)
 
    if (slot->state.envelope == ATTACK)
    {
-     YuiMsg("Attack %x\n", slot->state.attenuation);
       int rate = get_rate(slot, slot->regs.ar);
       int need_step = need_envelope_step(rate, slot->state.sample_counter, slot);
 
@@ -748,7 +740,6 @@ void op4(struct Slot * slot)
             attack_rate = attack_rate_table[0][sample_mod_4];
          else
             attack_rate = attack_rate_table[rate - 0x30][sample_mod_4];
-YuiMsg("Lower decay %d %x\n", attack_rate, slot->state.attenuation);
          slot->state.attenuation -= ((slot->state.attenuation >> attack_rate)) + 1;
 
          if (slot->state.attenuation == 0)
@@ -757,18 +748,14 @@ YuiMsg("Lower decay %d %x\n", attack_rate, slot->state.attenuation);
    }
    else if (slot->state.envelope == DECAY1)
    {
-     YuiMsg("Decay1 %x\n",slot->state.attenuation);
       do_decay(slot,slot->regs.d1r);
-      YuiMsg("DECAY1, DL reg %x %x\n", slot->regs.dl, slot->regs.d1r);
       if ((slot->state.attenuation >> 5) >= slot->regs.dl){
          change_envelope_state(slot, DECAY2);
        }
    }
    else if (slot->state.envelope == DECAY2){
-     YuiMsg("Decay2 %x\n", slot->state.attenuation);
       do_decay(slot, slot->regs.d2r);}
    else if (slot->state.envelope == RELEASE){
-     YuiMsg("Release %x\n", slot->state.attenuation);
       do_decay(slot, slot->regs.rr);}
 }
 
@@ -930,10 +917,8 @@ void scsp_debug_get_envelope(int chan, int * env, int * state)
 
 void keyon(struct Slot * slot)
 {
-  YuiMsg("Keyon %d\n", slot->state.envelope);
    if (slot->state.envelope == RELEASE )
    {
-     YuiMsg("Go to ATTACK\n");
      change_envelope_state(slot, ATTACK);
       slot->state.attenuation = 0x280;
       slot->state.sample_counter = 0;
@@ -1036,7 +1021,6 @@ void scsp_slot_write_byte(struct Scsp *s, u32 addr, u8 data)
       slot->regs.kb = (data >> 3) & 1;//has to be done first
 
       if ((data >> 4) & 1) { //keyonex
-        YuiMsg("KEY ON %d:1\n", slot_num);
         keyonex(s);
       }
 
@@ -1063,11 +1047,9 @@ void scsp_slot_write_byte(struct Scsp *s, u32 addr, u8 data)
       break;
    case 6:
       slot->regs.lea = (slot->regs.lea & 0x00ff) | (data << 8);
-      YuiMsg("%d LEA = %x\n",__LINE__, slot->regs.lea);
       break;
    case 7:
       slot->regs.lea = (slot->regs.lea & 0xff00) | data;
-      YuiMsg("%d LEA = %x\n",__LINE__, slot->regs.lea);
       break;
    case 8:
       slot->regs.d2r = (data >> 3) & 0x1f;
@@ -1273,7 +1255,6 @@ void scsp_slot_write_word(struct Scsp *s, u32 addr, u16 data)
       slot->regs.kb = (data >> 11) & 1;//has to be done before keyonex
 
       if (data & (1 << 12)){
-        YuiMsg("KEY ON %d:2\n", slot_num);
         keyonex(s);
       }
 
@@ -1291,7 +1272,6 @@ void scsp_slot_write_word(struct Scsp *s, u32 addr, u16 data)
       break;
    case 3:
       slot->regs.lea = data;
-      YuiMsg("%d LEA = %x (%x %x)\n",__LINE__, slot->regs.lea, addr, data);
       break;
    case 4:
       slot->regs.d2r = data >> 11;
@@ -1566,7 +1546,6 @@ void new_scsp_reset(struct Scsp* s)
 
    for (slot_num = 0; slot_num < 32; slot_num++)
    {
-     YuiMsg("Reset\n");
       s->slots[slot_num].state.attenuation = 0x3FF;
       s->slots[slot_num].state.envelope = RELEASE;
       s->slots[slot_num].state.num = slot_num;
@@ -1980,7 +1959,6 @@ scsp_dma (void)
       for (int i = 0; i < cnt; i++) {
         u16 val = SoundRamReadWord(NULL, SoundRam, from);
         //if (scsp.dmfl & 0x40) val = 0;
-        if (((to & 0xFFE)==6) && (val == 0)) YuiMsg("%d\n", __LINE__);
         scsp_w_w(NULL, NULL, to,val);
         from += 2;
         to += 2;
@@ -4227,8 +4205,6 @@ scsp_w_w (SH2_struct *context, UNUSED u8* m, u32 a, u16 d)
   if (a < 0x400)
     {
       *(u16 *)&scsp_isr[a ^ 2] = d;
-      if ((a == 6) && (d == 0)) YuiMsg("Line %d\n", __LINE__);
-      if ((a == 0x26) && (d == 0)) YuiMsg("Line %d\n", __LINE__);
       scsp_slot_write_word(&new_scsp, a, d);
       FLUSH_SCSP ();
       return;
@@ -4308,12 +4284,8 @@ scsp_w_d (SH2_struct *context, UNUSED u8* m, u32 a, u32 d)
   if (a < 0x400)
     {
       *(u16 *)&scsp_isr[a ^ 2] = d >> 16;
-      if ((a == 6) && ((d>>16) == 0)) YuiMsg("Line %d\n", __LINE__);
-      if ((a == 0x26) && ((d>>16) == 0)) YuiMsg("Line %d\n", __LINE__);
       scsp_slot_write_word(&new_scsp, a + 0, d >> 16);
       *(u16 *)&scsp_isr[(a + 2) ^ 2] = d & 0xffff;
-      if ((a == 4) && ((d & 0xffff) == 0)) YuiMsg("Line %d\n", __LINE__);
-      if ((a == 0x24) && ((d & 0xffff) == 0)) YuiMsg("Line %d\n", __LINE__);
       scsp_slot_write_word(&new_scsp, a + 2, d & 0xffff);
       FLUSH_SCSP ();
       return;
@@ -4795,8 +4767,6 @@ c68k_word_write (const u32 adr, u32 data)
 	}
   }
   else{
-    if (((adr & 0xFFE)==6) && (data == 0)) YuiMsg("%d\n", __LINE__);
-    if (((adr & 0xFFE)==0x26) && (data == 0)) YuiMsg("%d\n", __LINE__);
     scsp_w_w(NULL, NULL, adr, data);
   }
 }
@@ -5844,8 +5814,6 @@ SoundSaveState (FILE *fp)
   u8 nextphase;
   IOCheck_struct check = { 0, 0 };
 
-  YuiMsg("Savestate\n");
-
   offset = StateWriteHeader (fp, "SCSP", 4);
 
   // Save 68k registers first
@@ -6292,7 +6260,6 @@ if (IsM68KRunning != newM68state) {
             //scsp_slot_set_w (i, 0x1E - i2, scsp_slot_get_w (i, 0x1E - i2));
             u32 addr = (i << 5) + 0x1E - i2;
             u16 val = *(u16 *)&scsp_isr[addr ^ 2];
-            if (((addr & 0xFFE)==6) && (val == 0)) YuiMsg("%d\n", __LINE__);
             scsp_w_w(NULL, NULL, addr, val);
           }
         }
@@ -6523,7 +6490,6 @@ if (IsM68KRunning != newM68state) {
       yread(&check, (void *)&scspsoundlen, sizeof(u32), 1, fp);
       yread(&check, (void *)&scsplines, sizeof(u32), 1, fp);
     }
-YuiMsg("Loaded\n");
   return size;
 }
 
