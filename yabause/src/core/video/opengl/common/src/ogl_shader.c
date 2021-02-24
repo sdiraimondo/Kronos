@@ -2346,7 +2346,7 @@ static const char fblitnear_img[] =
     "{ \n"
     "    ivec2 coord = ivec2(vec2(textureSize(textureSampler,0))*TexCoord);\n"
     "    vec4 cur = texture( textureSampler, TexCoord ); \n"
-    "    if (coord.y&0x1) {\n"
+    "    if ((coord.y&0x1)==0x1) {\n"
     "     vec4 val1 = texelFetch( textureSampler, ivec2(coord.x,coord.y-1) , 0 ); \n"
     "     vec4 val2 = texelFetch( textureSampler, ivec2(coord.x,coord.y+1) , 0 ); \n"
     "     vec4 interpol = mix( val1, val2,vec4(0.5)); \n"
