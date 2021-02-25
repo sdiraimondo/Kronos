@@ -1871,9 +1871,9 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   } else {
     //Single density
     if (((varVdp2Regs->TVSTAT>>1)&0x1)==1)
-    glUniform1i(glGetUniformLocation(vdp2blit_prg, "nbFrame"),0);
-    else
     glUniform1i(glGetUniformLocation(vdp2blit_prg, "nbFrame"),1);
+    else
+    glUniform1i(glGetUniformLocation(vdp2blit_prg, "nbFrame"),0);
   }
 
   glDisable(GL_DEPTH_TEST);
