@@ -2388,6 +2388,18 @@ static const char fblitnear_img[] =
       "     return cur; \n"
       "} \n";
 
+      static const char fbobossc_debug_img[] =
+        "vec4 Filter( sampler2D textureSampler, vec2 TexCoord ) \n"
+        "{ \n"
+        "    ivec2 coord = ivec2(vec2(textureSize(textureSampler,0))*TexCoord);\n"
+        "    vec4 cur = texture( textureSampler, TexCoord ); \n"
+        "    if ((coord.y&0x1)!=field) {\n"
+        "     return vec4(1.0,0.0,0.0,1.0); \n"
+        "}\n"
+        " else"
+        "     return cur; \n"
+        "} \n";
+
 static const char fblitbilinear_img[] =
   "// Function to get a texel data from a texture with GL_NEAREST property. \n"
   "// Bi-Linear interpolation is implemented in this function with the  \n"
@@ -2436,6 +2448,7 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
   const GLchar * fblit_bob_secure_debug_img_v[] = { fblit_head, fbobsecure_debug_img, fblit_img, fblit_img_end, NULL };
 
   const GLchar * fblit_bob_ossc_img_v[] = { fblit_head, fbobossc_img, fblit_img, fblit_img_end, NULL };
+  const GLchar * fblit_bob_ossc_debug_img_v[] = { fblit_head, fbobossc_debug_img, fblit_img, fblit_img_end, NULL };
 
   int aamode = _Ygl->aamode;
 
@@ -2532,12 +2545,16 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
         case AA_BOB_OSSC_FILTER:
           glShaderSource(fshader, 4, fblit_bob_ossc_img_v, NULL);
           break;
+        case AA_BOB_OSSC_DEBUG_FILTER:
+          glShaderSource(fshader, 4, fblit_bob_ossc_debug_img_v, NULL);
+          break;
       }
     } else {
       switch(aamode) {
         case AA_BOB_SECURE_FILTER:
         case AA_BOB_SECURE_DEBUG_FILTER:
         case AA_BOB_OSSC_FILTER:
+        case AA_BOB_OSSC_DEBUG_FILTER:
         case AA_NONE:
           glShaderSource(fshader, 5, fblit_img_scanline_v, NULL);
           break;

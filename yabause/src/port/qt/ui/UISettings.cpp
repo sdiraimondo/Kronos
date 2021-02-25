@@ -90,7 +90,8 @@ const Items mVideoFilterMode = Items()
 	<< Item("2", "BiCubic")
 	<< Item("3", "Deinterlacing Bob")
 	<< Item("4", "Deinterlacing Debug Bob")
-	<< Item("5", "Deinterlacing OSSC Bob");
+	<< Item("5", "Deinterlacing OSSC Bob")
+	<< Item("6", "Deinterlacing OSSC Debug Bob");
 
 const Items mUpscaleFilterMode = Items()
 	<< Item("0", "None")
