@@ -2357,6 +2357,22 @@ static const char fblitnear_img[] =
     "     return cur; \n"
     "} \n";
 
+    static const char fbobsecure_debug_img[] =
+      "vec4 Filter( sampler2D textureSampler, vec2 TexCoord ) \n"
+      "{ \n"
+      "    ivec2 coord = ivec2(vec2(textureSize(textureSampler,0))*TexCoord);\n"
+      "    vec4 cur = texture( textureSampler, TexCoord ); \n"
+      "    if ((coord.y&0x1)==0x1) {\n"
+      "     vec4 val1 = texelFetch( textureSampler, ivec2(coord.x,coord.y-1) , 0 ); \n"
+      "     vec4 val2 = texelFetch( textureSampler, ivec2(coord.x,coord.y+1) , 0 ); \n"
+      "     vec4 interpol = mix( val1, val2,vec4(0.5)); \n"
+      "     if (distance(val1, val2) > 0.5f) return vec4(0.0,1.0,0.0,1.0);\n"
+      "     if (distance(cur, interpol) < 0.15f) return vec4(1.0,0.0,0.0,1.0); else return vec4(0.0,1.0,0.0,1.0);\n"
+      "}\n"
+      " else"
+      "     return cur; \n"
+      "} \n";
+
 static const char fblitbilinear_img[] =
   "// Function to get a texel data from a texture with GL_NEAREST property. \n"
   "// Bi-Linear interpolation is implemented in this function with the  \n"
@@ -2402,6 +2418,8 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
   const GLchar * fblitbicubic_img_scanline_v[] = { fblit_head, fblitbicubic_img, fblit_img, Yglprg_blit_scanline_f, fblit_img_end, NULL };
 
   const GLchar * fblit_bob_secure_img_v[] = { fblit_head, fbobsecure_img, fblit_img, fblit_img_end, NULL };
+  const GLchar * fblit_bob_secure_debug_img_v[] = { fblit_head, fbobsecure_debug_img, fblit_img, fblit_img_end, NULL };
+
   int aamode = _Ygl->aamode;
 
   float const vertexPosition[] = {
@@ -2444,7 +2462,7 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
   }
   //if ((aamode == AA_NONE) && ((w != dispw) || (h != disph))) aamode = AA_BILINEAR_FILTER;
   if (((Vdp2Regs->TVMD>>6)&0x3) == 0) {
-    if (aamode == AA_BOB_SECURE_FILTER) {
+    if ((aamode == AA_BOB_SECURE_FILTER) || (aamode == AA_BOB_SECURE_DEBUG_FILTER)) {
       aamode = AA_NONE;
     }
   }
@@ -2491,10 +2509,14 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
         case AA_BOB_SECURE_FILTER:
           glShaderSource(fshader, 4, fblit_bob_secure_img_v, NULL);
           break;
+        case AA_BOB_SECURE_DEBUG_FILTER:
+          glShaderSource(fshader, 4, fblit_bob_secure_debug_img_v, NULL);
+          break;
       }
     } else {
       switch(aamode) {
         case AA_BOB_SECURE_FILTER:
+        case AA_BOB_SECURE_DEBUG_FILTER:
         case AA_NONE:
           glShaderSource(fshader, 5, fblit_img_scanline_v, NULL);
           break;
